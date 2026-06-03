@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploy the savings-goal contract to Stellar testnet, then write the contract
+# Deploy the CareFund FundPool contract to Stellar testnet, then write the contract
 # ID into web/.env.local so the frontend can call it.
 #
 # Prereqs (from the workshop setup checklist): Rust + the wasm32v1-none target,
@@ -11,7 +11,7 @@ set -euo pipefail
 IDENTITY="${1:-workshop}"
 NETWORK="testnet"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-WASM="target/wasm32v1-none/release/savings_goal.wasm"
+WASM="target/wasm32v1-none/release/fund_pool.wasm"
 ENV_FILE="$ROOT/web/.env.local"
 
 cd "$ROOT"
@@ -21,6 +21,7 @@ if ! stellar keys ls | grep -qx "$IDENTITY"; then
   echo "Creating + funding testnet identity '$IDENTITY'..."
   stellar keys generate "$IDENTITY" --network "$NETWORK" --fund
 fi
+ADMIN_ADDRESS="$(stellar keys address "$IDENTITY")"
 
 # 2. Build the contract to wasm
 echo "Building contract..."
@@ -34,13 +35,14 @@ CONTRACT_ID=$(stellar contract deploy \
   --network "$NETWORK")
 echo "Deployed contract ID: $CONTRACT_ID"
 
-# 4. Initialise the savings goal (target = 1000). Ignore error if already initialised.
-echo "Initialising savings goal (target 1000)..."
+# 4. Initialise the FundPool. For MVP demos the identity address is also used as
+# the placeholder asset address; pass the USDC SAC address when wiring real USDC.
+echo "Initialising FundPool..."
 stellar contract invoke \
   --id "$CONTRACT_ID" \
   --source-account "$IDENTITY" \
   --network "$NETWORK" \
-  -- init --target 1000 || echo "(init skipped — contract may already be initialised)"
+  -- init --admin "$ADMIN_ADDRESS" --asset "$ADMIN_ADDRESS" || echo "(init skipped — contract may already be initialised)"
 
 # 5. Write NEXT_PUBLIC_CONTRACT_ID into web/.env.local
 if [ -f "$ENV_FILE" ]; then

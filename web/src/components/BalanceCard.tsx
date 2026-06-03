@@ -14,8 +14,11 @@ export default function BalanceCard({
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    fetchBalances(publicKey)
+    void Promise.resolve()
+      .then(() => {
+        if (active) setLoading(true);
+        return fetchBalances(publicKey);
+      })
       .then((b) => active && setBalances(b))
       .catch(() => active && setBalances(null))
       .finally(() => active && setLoading(false));

@@ -1,11 +1,11 @@
-# StellarX Workshop Starter — project notes for AI tools
+# CareFund Stellar — project notes for AI tools
 
-A monorepo scaffold for the StellarX PH workshop @ PUP QC. Two parts:
+A monorepo for the CareFund Stellar MVP. Two parts:
 
 - `web/` — Next.js 16 + TypeScript + Tailwind v4 frontend (connect Freighter,
-  show balances, send a testnet payment, invoke a Soroban contract).
-- `contracts/savings-goal/` — a Rust Soroban contract (`init` / `contribute` /
-  `get_state`) with unit tests.
+  browse fund modules, create requests, and use CareFund API routes).
+- `contracts/fund-pool/` — a Rust Soroban FundPool contract with contribution,
+  payout request, approval, stipend, solar share, and verification state.
 
 ## Stack / versions
 
@@ -43,8 +43,8 @@ A monorepo scaffold for the StellarX PH workshop @ PUP QC. Two parts:
 - Stellar config + Friendbot: `web/src/lib/stellar.ts`
 - Balances (Horizon): `web/src/lib/balances.ts`
 - Payment build/submit/poll: `web/src/lib/payment.ts`
-- Soroban read/write: `web/src/lib/contract.ts`
 - Wallet hook: `web/src/hooks/useWallet.ts`
-- UI: `web/src/components/*`, wired in `web/src/app/page.tsx`
-- Contract: `contracts/savings-goal/src/lib.rs` (+ `test.rs`)
+- CareFund data/store: `web/src/data/carefund.ts`, `web/src/lib/db/store.ts`
+- UI: `web/src/components/carefund/*`, wired through `web/src/app/*`
+- Contract: `contracts/fund-pool/src/lib.rs` (+ `test.rs`)
 - Deploy: `scripts/deploy.ps1` (Windows) / `scripts/deploy.sh`

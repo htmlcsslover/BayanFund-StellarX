@@ -1,31 +1,38 @@
-'use client';
-import { useState } from 'react';
+"use client";
+
+import { useState } from "react";
 import {
   buildPaymentXDR,
   submitSignedXDR,
   pollTransaction,
   type AssetCode,
-} from '@/lib/payment';
-import { NETWORK_PASSPHRASE } from '@/lib/stellar';
+} from "@/lib/payment";
+import { NETWORK_PASSPHRASE } from "@/lib/stellar";
 
 type Status =
-  | 'idle'
-  | 'building'
-  | 'signing'
-  | 'submitting'
-  | 'polling'
-  | 'success'
-  | 'error';
+  | "idle"
+  | "building"
+  | "signing"
+  | "submitting"
+  | "polling"
+  | "success"
+  | "error";
 
 const STATUS_LABEL: Record<Status, string> = {
-  idle: 'Send',
-  building: 'Building transaction…',
-  signing: 'Waiting for Freighter…',
-  submitting: 'Submitting…',
-  polling: 'Confirming on-chain…',
-  success: 'Send',
-  error: 'Send',
+  idle: "Send",
+  building: "Building transaction…",
+  signing: "Waiting for Freighter…",
+  submitting: "Submitting…",
+  polling: "Confirming on-chain…",
+  success: "Send",
+  error: "Send",
 };
+
+interface FreighterSignResponse {
+  signedTxXdr?: string;
+  result?: string;
+  error?: string;
+}
 
 export default function SendPayment({
   publicKey,
@@ -34,45 +41,58 @@ export default function SendPayment({
   publicKey: string;
   onSent: () => void;
 }) {
-  const [destination, setDestination] = useState('');
-  const [amount, setAmount] = useState('');
-  const [asset, setAsset] = useState<AssetCode>('XLM');
-  const [status, setStatus] = useState<Status>('idle');
-  const [txHash, setTxHash] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
+  const [destination, setDestination] = useState("");
+  const [amount, setAmount] = useState("");
+  const [asset, setAsset] = useState<AssetCode>("XLM");
+  const [status, setStatus] = useState<Status>("idle");
+  const [txHash, setTxHash] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const busy = ['building', 'signing', 'submitting', 'polling'].includes(status);
+  const busy = ["building", "signing", "submitting", "polling"].includes(status);
 
   const handleSend = async () => {
-    setStatus('building');
-    setErrorMsg('');
-    setTxHash('');
+    setStatus("building");
+    setErrorMsg("");
+    setTxHash("");
     try {
       const xdr = await buildPaymentXDR(publicKey, destination.trim(), amount, asset);
 
-      setStatus('signing');
-      const freighter = await import('@stellar/freighter-api');
-      const signed = await freighter.signTransaction(xdr, {
+      setStatus("signing");
+      const freighter = await import("@stellar/freighter-api");
+      const signed = (await freighter.signTransaction(xdr, {
         networkPassphrase: NETWORK_PASSPHRASE,
         address: publicKey,
-      });
-      if (signed.error) {
-        throw new Error(
-          typeof signed.error === 'string' ? signed.error : 'Signing was rejected',
-        );
+      })) as unknown as (FreighterSignResponse | string);
+
+      let signedTxXdr: string | undefined;
+      let error: string | undefined;
+
+      if (typeof signed === "string") {
+        signedTxXdr = signed;
+      } else {
+        signedTxXdr = signed.signedTxXdr || signed.result;
+        error = signed.error;
       }
 
-      setStatus('submitting');
-      const hash = await submitSignedXDR(signed.signedTxXdr);
+      if (error) {
+        throw new Error(error);
+      }
+
+      if (!signedTxXdr) {
+        throw new Error("Failed to retrieve signed transaction XDR");
+      }
+
+      setStatus("submitting");
+      const hash = await submitSignedXDR(signedTxXdr);
       setTxHash(hash);
 
-      setStatus('polling');
+      setStatus("polling");
       await pollTransaction(hash);
-      setStatus('success');
+      setStatus("success");
       onSent();
     } catch (e: unknown) {
-      setErrorMsg(e instanceof Error ? e.message : 'Payment failed');
-      setStatus('error');
+      setErrorMsg(e instanceof Error ? e.message : "Payment failed");
+      setStatus("error");
     }
   };
 
@@ -126,7 +146,7 @@ export default function SendPayment({
         </button>
       </div>
 
-      {status === 'success' && (
+      {status === "success" && (
         <div className="mt-4 rounded border border-emerald-200 bg-emerald-50 p-3">
           <p className="font-medium text-emerald-700">Payment confirmed!</p>
           <a
@@ -140,7 +160,7 @@ export default function SendPayment({
         </div>
       )}
 
-      {status === 'error' && (
+      {status === "error" && (
         <div className="mt-4 rounded border border-red-200 bg-red-50 p-3">
           <p className="text-sm text-red-700">{errorMsg}</p>
         </div>

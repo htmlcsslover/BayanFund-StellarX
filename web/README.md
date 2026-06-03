@@ -11,6 +11,22 @@ npm run dev
 
 Open <http://localhost:3000>.
 
+## Configuration
+
+Before running the application, create a `.env` file in the root directory and ensure you have set a destination wallet for donations:
+
+```env
+DATABASE_URL="file:./dev.db"
+NEXT_PUBLIC_STELLAR_TREASURY_ADDRESS="your_stellar_wallet_address"
+```
+
+**Note:** The website requires a valid `NEXT_PUBLIC_STELLAR_TREASURY_ADDRESS` to process contributions.
+
+## Admin Access
+
+- **Password:** `bayanfund2026`
+- **Dashboard:** `/admin`
+
 ## Key Routes
 
 - `/` landing page
